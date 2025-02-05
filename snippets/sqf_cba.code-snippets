@@ -99,6 +99,13 @@
         "prefix": "cba_event_handler",
         "description": "Add a CBA event handler"
     },
+    "CBA Player Event Handler": {
+        "body": [
+            "[\"${1|unit,weapon,turretweapon,muzzle,weaponMode,loadout,vehicle,turret,turretOpticsMode,visionMode,cameraView,featureCamera,visibleMap,group,leader|}\", LINKFUNC($2)] call CBA_fnc_addPlayerEventHandler;"
+        ],
+        "prefix": "cba_player_event_handler",
+        "description": "Add a CBA player event handler"
+    },
     "CBA JIP Event": {
         "body": [
             "private _jipID = [QGVAR(${1:Event name}), ${2:Parameters}] call CBA_fnc_globalEventJIP;",
