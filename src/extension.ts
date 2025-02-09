@@ -1,21 +1,18 @@
 import * as vscode from "vscode";
-import fs from "fs";
+import fs from "fs/promises";
+import {ELogLevel} from "./e-log-level";
+import {existsSync} from "fs";
+import { extname, join, parse } from "path";
 
-function isUndefined(value: any): boolean {
-    return (value === null || value === undefined);
-}
+let channel: vscode.OutputChannel = vscode.window.createOutputChannel("LazyArmaDev");
 
 /**
  * Logs a message to the debug console
  * @param {String} level Log level, e.g. TRACE, INFO, WARN, ERROR
  * @param {String} message The message to log
  */
-function logMessage(level: string, message: string) {
-    level = level.toUpperCase();
-    const length = level.length;
-
-    level = " ".repeat(5 - length) + level;
-    console.log(`[LazyArmaDev] ${level}: ${message}`);
+function logMessage(level: ELogLevel, message: string) {
+    channel.appendLine(`[${level.padEnd(5)}]: ${message}`);
 }
 
 // Used to get the path to something inside the component folder
@@ -29,23 +26,23 @@ const addonDiskRegex = /.*\\addons\\[^\\]*/;
  * @param {string} macroPath The path to the given file or folder
  * @param {boolean} useExternal (default, false) Use QPATHTOEF macro
  */
-function copyPath(macroPath: string, useExternal: boolean = false) {
+async function copyPath(macroPath: string, useExternal: boolean = false) {
     const match = macroPath.match(addonRegex);
-    if (isUndefined(match)) { return; }
+    if (!match) { return; }
 
-    logMessage("TRACE", `macroPath=${macroPath}, match=${match}`);
-    let macroPathArray = match![1].split("\\");
+    logMessage(ELogLevel.TRACE, `macroPath=${macroPath}, match=${match}`);
+    const macroPathArray = match![1].split("\\");
     const componentName = macroPathArray.shift();
 
     if (useExternal) {
-        macroPath = `QPATHTOEF(${componentName},${macroPathArray.join("\\")})`;
+        macroPath = `QPATHTOEF(${componentName},${join(...macroPathArray)})`;
     } else {
-        macroPath = `QPATHTOF(${macroPathArray.join("\\")})`;
-    };
+        macroPath = `QPATHTOF(${join(...macroPathArray)})`;
+    }
 
-    logMessage("INFO", `Copied path to clipboard: ${macroPath}`);
-    vscode.window.showInformationMessage(`Copied ${macroPath} path to clipboard`);
-    vscode.env.clipboard.writeText(macroPath);
+    logMessage(ELogLevel.INFO, `Copied path to clipboard: ${macroPath}`);
+    await vscode.window.showInformationMessage(`Copied ${macroPath} path to clipboard`);
+    await vscode.env.clipboard.writeText(macroPath);
 }
 
 /**
@@ -53,44 +50,45 @@ function copyPath(macroPath: string, useExternal: boolean = false) {
  * @param {String} filePath The path to the stringtable.xml file
  * @param {String} stringKey The translation key
  */
-function addStringtableKey(filePath: string, stringKey: string) {
-    let content = fs.readFileSync(filePath, {encoding: "utf-8", flag: "r"}).split("\n");
+async function addStringTableKey(filePath: string, stringKey: string) {
+    const content = (await fs.readFile(filePath, {encoding: "utf-8", flag: "r"})).split("\n");
 
     const newKey = `        <Key ID="${stringKey}">
             <English></English>
         </Key>`;
     content.splice(content.length - 2, 0, newKey);
 
-    fs.writeFile(filePath, content.join("\n"), err => {
-        if (err) {
-            vscode.window.showErrorMessage(`Failed to write to stringtable file at ${filePath}`);
-        } else {
-            vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`);
-        }
-    });
+    try {
+        await fs.writeFile(filePath, content.join("\n"));
+        await vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`);
+    } catch (err) {
+        await vscode.window.showErrorMessage(`Failed to write to stringtable file at ${filePath}`);
+    }
 }
 
 /**
  * Returns the various "prefixes" for the mod / addon
- * @return {string[]} Array of [main prefix, prefix, component]
  */
-function getProjectPrefix(): string[] {
+async function getProjectPrefix() {
     const filePath = vscode.window.activeTextEditor?.document.fileName;
-    if (isUndefined(filePath)) { return ["", "", ""]; }
+    if (!filePath) {
+        return { mainPrefix: "", prefix: "", component: "" };
+    }
 
-    let addonDir = filePath!.match(addonDiskRegex);
-    if (addonDir === null) { return ["", "", ""]; }
+    const addonDir = filePath!.match(addonDiskRegex);
+    if (!addonDir) {
+        return { mainPrefix: "", prefix: "", component: "" };
+    }
 
     const addonDirArray = addonDir[0].split("\\");
     const component = addonDirArray[addonDirArray.length - 1];
 
     // Read $PBOPREFIX$ file to get main prefix and prefix
-    const prefixContent = fs.readFileSync(`${addonDir}\\$PBOPREFIX$`, {encoding: "utf-8", flag: "r"}).split("\\");
-    const mainprefix = prefixContent[0];
+    const prefixContent = (await fs.readFile(`${addonDir}\\$PBOPREFIX$`, {encoding: "utf-8", flag: "r"})).split("\\");
+    const mainPrefix = prefixContent[0];
     const prefix = prefixContent[1];
 
-    let returnValue = [mainprefix, prefix, component];
-    return returnValue;
+    return { mainPrefix, prefix, component };
 }
 
 /*
@@ -104,11 +102,11 @@ function getProjectPrefix(): string[] {
  */
 function activate(context: vscode.ExtensionContext) {
     // Custom when clause for when the "Generate Stringtable Key" command should be shown
-    vscode.window.onDidChangeTextEditorSelection((event) => {
-        if (event.kind === undefined) { return; };
+    vscode.window.onDidChangeTextEditorSelection(async (event) => {
+        if (!event.kind) { return; }
 
         const document = vscode.window.activeTextEditor?.document;
-        if (document === null || document === undefined) { return; }
+        if (!document) { return; }
         const position = event.selections[0].anchor;
 
         // Get the previous word, rather than where the cursor is
@@ -116,103 +114,99 @@ function activate(context: vscode.ExtensionContext) {
 
         const newCharacter = position.character - selectedWord.length;
         if (newCharacter <= 0) {
-            vscode.commands.executeCommand("setContext", "LazyArmaDev.selectedStringtableMacro", false);
+            await vscode.commands.executeCommand("setContext", "LazyArmaDev.selectedStringtableMacro", false);
             return;
-        };
+        }
 
         const macroStart = new vscode.Position(position.line, newCharacter);
 
         selectedWord = document.getText(document.getWordRangeAtPosition(macroStart));
-        logMessage("TRACE", `selectedWord=${selectedWord}, ${selectedWord.endsWith("STRING")}`);
-        vscode.commands.executeCommand("setContext", "LazyArmaDev.selectedStringtableMacro", selectedWord.endsWith("STRING")); // CSTRING, LSTRING, LLSTRING, etc.
+        logMessage(ELogLevel.TRACE, `selectedWord=${selectedWord}, ${selectedWord.endsWith("STRING")}`);
+        await vscode.commands.executeCommand("setContext", "LazyArmaDev.selectedStringtableMacro", selectedWord.endsWith("STRING")); // CSTRING, LSTRING, LLSTRING, etc.
     });
 
-    const copyMacroPath = vscode.commands.registerCommand("lazyarmadev.copyMacroPath", function (editor) {
+    const copyMacroPath = vscode.commands.registerCommand("lazyarmadev.copyMacroPath", async (editor) => {
+        if (!editor) { return; }
         let path = editor.path.split("/");
         path.shift();
-        copyPath(path.join("\\"));
+        await copyPath(join(...path));
     });
     context.subscriptions.push(copyMacroPath);
 
-    const copyExternalMacroPath = vscode.commands.registerCommand("lazyarmadev.copyExternalMacroPath", function (editor) {
+    const copyExternalMacroPath = vscode.commands.registerCommand("lazyarmadev.copyExternalMacroPath", async (editor) => {
+        if (!editor) { return; }
         let path = editor.path.split("/");
         path.shift();
-        copyPath(path.join("\\"), true);
+        await copyPath(join(...path), true);
     });
     context.subscriptions.push(copyExternalMacroPath);
 
-    const generatePrepFile = vscode.commands.registerCommand("lazyarmadev.generatePrepFile", function (editor) {
+    const generatePrepFile = vscode.commands.registerCommand("lazyarmadev.generatePrepFile", async (editor) => {
+        if (!editor) { return; }
         let functionsFolderArray = editor.path.split("/");
         functionsFolderArray.shift();
-        logMessage("TRACE", `functionsFolderArray=[${functionsFolderArray}]`);
-        const functionsFolder = functionsFolderArray.join("\\");
+        logMessage(ELogLevel.TRACE, `functionsFolderArray=[${functionsFolderArray}]`);
+        const functionsFolder = join(...functionsFolderArray, "");
 
-        logMessage("INFO", `Generating PREP file for "${functionsFolder}"`);
-        let files = fs.readdirSync(functionsFolder);
+        logMessage(ELogLevel.INFO, `Generating PREP file for "${functionsFolder}"`);
+        let files = await fs.readdir(functionsFolder);
 
         // Only PREP sqf files
-        files = files.filter(function (file) {
-            const extensionArray = file.split(".");
-            const extension = extensionArray[extensionArray.length - 1];
-            return extension.toLowerCase() === "sqf";
+        files = files.filter((file) => extname(file.toLowerCase()) === ".sqf");
+
+        files = files.map(file => {
+            let functionName = parse(file).name; // Remove extension
+            functionName = (functionName.split("_").splice(1)).join("_"); // Remove fn_ / fnc_ prefix
+            return `PREP(${functionName});`;
         });
 
-        // Convert fnc_function_name.sqf -> PREP(function_name);
-        files.forEach((file, index) => {
-            let functionName = file.split(".")[0]; // Remove extension
-            functionName = (functionName.split("_").splice(1)).join("_"); // Remove fn_ / fnc_ prefix
-            files[index] = `PREP(${functionName});`;
-        }, files);
-
-        // Filter out files that didn't match
-        files = files.filter(file => file !== "PREP(undefined);");
         const content = files.join("\n");
 
-        logMessage("TRACE", `content=${content}`);
+        logMessage(ELogLevel.TRACE, `content=${content}`);
         files.sort();
 
         functionsFolderArray.pop(); // Remove "functions", XEH_PREP should be in addon root
-        const prepFileDir = functionsFolderArray.join("\\") + "\\XEH_PREP.hpp";
-        fs.writeFile(prepFileDir, content, err => {
-            if (err) {
-                vscode.window.showErrorMessage(`Failed to create file at ${prepFileDir}`);
-            } else {
-                vscode.window.showInformationMessage(`Generated XEH_PREP.hpp file for ${files.length} functions`);
-            }
-        });
+        const prepFileDir = join(...functionsFolderArray, "XEH_PREP.hpp");
+        try {
+            await fs.writeFile(prepFileDir, content);
+            await vscode.window.showInformationMessage(`Generated XEH_PREP.hpp file for ${files.length} functions`);
+        } catch (err) {
+            await vscode.window.showErrorMessage(`Failed to create file at ${prepFileDir}`);
+        }
     });
     context.subscriptions.push(generatePrepFile);
 
-    const generateStringtableKey = vscode.commands.registerTextEditorCommand("lazyarmadev.generateStringtableKey", function (textEditor: vscode.TextEditor) {
+    const generateStringtableKey = vscode.commands.registerTextEditorCommand("lazyarmadev.generateStringtableKey", async (textEditor: vscode.TextEditor) =>  {
+        if (!textEditor) { return; }
         const document = textEditor.document;
         const match = document!.fileName.match(addonDiskRegex);
 
         const stringtableDir = `${match![0]}\\stringtable.xml`;
-        logMessage("TRACE", `stringtableDir=${stringtableDir}`);
+        logMessage(ELogLevel.TRACE, `stringtableDir=${stringtableDir}`);
 
-        const [, prefix, component] = getProjectPrefix();
+        const projectPrefix = await getProjectPrefix();
         let stringKey = document!.getText(document!.getWordRangeAtPosition(textEditor!.selection.active));
-        stringKey = `STR_${prefix}_${component}_${stringKey}`;
-        logMessage("TRACE", `stringKey="${stringKey}"`);
+        stringKey = `STR_${projectPrefix.prefix}_${projectPrefix.component}_${stringKey}`;
+        logMessage(ELogLevel.TRACE, `stringKey="${stringKey}"`);
 
         // File doesn't exist, so create a "blank" stringtable
-        if (!fs.existsSync(stringtableDir)) {
-            logMessage("TRACE", "No stringtable.xml found, creating blank file");
+        if (!existsSync(stringtableDir)) {
+            logMessage(ELogLevel.TRACE, "No stringtable.xml found, creating blank file");
             const content = `<?xml version="1.0" encoding="utf-8"?>
-<Project name="${prefix.toUpperCase()}">
-    <Package name="${component}">
+<Project name="${projectPrefix.prefix.toUpperCase()}">
+    <Package name="${projectPrefix.component}">
     </Package>
 </Project>`;
-            fs.writeFile(stringtableDir, content, err => {
-                if (err) {
-                    vscode.window.showErrorMessage(`Failed to create missing stringtable file at ${stringtableDir}`);
-                } else {
-                    vscode.window.showInformationMessage(`Automatically generated missing stringtable.xml file`);
-                    addStringtableKey(stringtableDir, stringKey);
-                }
-            });
+            try {
+                await fs.writeFile(stringtableDir, content);
+                vscode.window.showInformationMessage(`Automatically generated missing stringtable.xml file`);
+                await addStringTableKey(stringtableDir, stringKey);
+            } catch (err) {
+                await vscode.window.showErrorMessage(`Failed to create missing stringtable file at ${stringtableDir}`);
+            }
+
         } else {
-            addStringtableKey(stringtableDir, stringKey);
+            await addStringTableKey(stringtableDir, stringKey);
         }
     });
     context.subscriptions.push(generateStringtableKey);

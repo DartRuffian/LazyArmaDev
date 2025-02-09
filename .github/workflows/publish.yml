@@ -43,10 +43,18 @@ jobs:
         with:
           tag: v${{ steps.calculateVersion.outputs.AppVersion }}
 
-      - name: Create Release
+      - name: Create release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: v${{ steps.calculateVersion.outputs.AppVersion }}
           artifacts: lazyarmadev-${{ steps.calculateVersion.outputs.AppVersion }}.vsix
           generateReleaseNotes: true
+
+      - name: Close current release milestone
+        uses: Beakyn/gha-close-milestone@v1.1.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          repository: ${{ github.repository }}
+          milestone-title: v${{ steps.calculateVersion.outputs.AppVersion }}
