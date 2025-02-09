@@ -3,13 +3,16 @@ import fs from "fs/promises";
 import {ELogLevel} from "./e-log-level";
 import {existsSync} from "fs";
 import { extname, join, parse } from "path";
+
+let channel: vscode.OutputChannel = vscode.window.createOutputChannel("LazyArmaDev");
+
 /**
  * Logs a message to the debug console
  * @param {String} level Log level, e.g. TRACE, INFO, WARN, ERROR
  * @param {String} message The message to log
  */
 function logMessage(level: ELogLevel, message: string) {
-    console.log(`[LazyArmaDev] ${level.padStart(5)}: ${message}`);
+    channel.appendLine(`[${level.padEnd(5)}]: ${message}`);
 }
 
 // Used to get the path to something inside the component folder
