@@ -41,8 +41,8 @@ async function copyPath(macroPath: string, useExternal: boolean = false) {
     }
 
     logMessage(ELogLevel.INFO, `Copied path to clipboard: ${macroPath}`);
-    await vscode.window.showInformationMessage(`Copied ${macroPath} path to clipboard`);
     await vscode.env.clipboard.writeText(macroPath);
+    await vscode.window.showInformationMessage(`Copied ${macroPath} path to clipboard`);
 }
 
 /**
