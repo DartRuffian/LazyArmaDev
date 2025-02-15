@@ -6,6 +6,12 @@ import { extname, join, parse } from "path";
 
 let channel: vscode.OutputChannel = vscode.window.createOutputChannel("LazyArmaDev");
 
+/*
+ Important notes:
+ A showXMessage function should always be the last line.
+ These return an awaitable state that resolves when the window of that message disapears, so any lines after may not run.
+ */
+
 /**
  * Logs a message to the debug console
  * @param {String} level Log level, e.g. TRACE, INFO, WARN, ERROR
@@ -41,8 +47,8 @@ async function copyPath(macroPath: string, useExternal: boolean = false) {
     }
 
     logMessage(ELogLevel.INFO, `Copied path to clipboard: ${macroPath}`);
-    await vscode.window.showInformationMessage(`Copied ${macroPath} path to clipboard`);
     await vscode.env.clipboard.writeText(macroPath);
+    await vscode.window.showInformationMessage(`Copied ${macroPath} path to clipboard`);
 }
 
 /**
@@ -199,8 +205,8 @@ function activate(context: vscode.ExtensionContext) {
 </Project>`;
             try {
                 await fs.writeFile(stringtableDir, content);
-                vscode.window.showInformationMessage(`Automatically generated missing stringtable.xml file`);
                 await addStringTableKey(stringtableDir, stringKey);
+                vscode.window.showInformationMessage(`Automatically generated missing stringtable.xml file`);
             } catch (err) {
                 await vscode.window.showErrorMessage(`Failed to create missing stringtable file at ${stringtableDir}`);
             }
