@@ -87,7 +87,7 @@
     },
     "CBA Exec Next Frame": {
         "body": [
-            "[{ $0 }, {${1:Parameters (optional)}] call CBA_fnc_execNextFrame;"
+            "[{ $0 }, ${1:Parameters (optional)}] call CBA_fnc_execNextFrame;"
         ],
         "prefix": "cba_execNextFrame",
         "description": "Execute code on the next frame"
