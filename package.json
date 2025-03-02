@@ -28,6 +28,10 @@
                 "title": "Copy QPATHTOEF Path"
             },
             {
+                "command": "lazyarmadev.copyResolvedPath",
+                "title": "Copy Resolved Path"
+            },
+            {
                 "command": "lazyarmadev.generatePrepFile",
                 "title": "Generate XEH_PREP.hpp"
             },
@@ -71,6 +75,9 @@
                 },
                 {
                     "command": "lazyarmadev.copyExternalMacroPath"
+                },
+                {
+                    "command": "lazyarmadev.copyResolvedPath"
                 }
             ],
             "explorer/context": [
