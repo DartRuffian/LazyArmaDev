@@ -74,7 +74,12 @@ async function addStringTableKey(filePath: string, stringKey: string) {
 
     try {
         await fs.writeFile(filePath, content.join("\n"));
-        await vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`);
+        await vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`, "Open File")
+            .then(selection => {
+                if (selection === "Open File") {
+                    vscode.window.showTextDocument(vscode.Uri.file(filePath));
+                }
+            });
     } catch (err) {
         await vscode.window.showErrorMessage(`Failed to write to stringtable file at ${filePath}`);
     }
