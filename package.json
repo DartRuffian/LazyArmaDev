@@ -58,22 +58,30 @@
                 "path": "./snippets/arma-config.code-snippets"
             }
         ],
+        "submenus": [
+            {
+                "id": "lazyarmadev",
+                "label": "LazyArmaDev"
+            }
+        ],
         "menus": {
+            "lazyarmadev": [
+                {
+                    "command": "lazyarmadev.copyMacroPath"
+                },
+                {
+                    "command": "lazyarmadev.copyExternalMacroPath"
+                }
+            ],
             "explorer/context": [
-                {
-                    "command": "lazyarmadev.copyMacroPath",
-                    "group": "5_cutcopypaste@1",
-                    "when": "resourceDirname =~ /addons/i"
-                },
-                {
-                    "command": "lazyarmadev.copyExternalMacroPath",
-                    "group": "5_cutcopypaste@2",
-                    "when": "resourceDirname =~ /addons/i"
-                },
                 {
                     "command": "lazyarmadev.generatePrepFile",
                     "group": "5_cutcopypaste",
                     "when": "resourcePath =~ /functions$/i"
+                },
+                {
+                    "submenu": "lazyarmadev",
+                    "group": "5_cutcopypaste"
                 }
             ],
             "editor/context": [
