@@ -24,3 +24,12 @@ Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.
 
 ## [Release 1.0.7]
 Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.7)
+
+## [Release 1.0.8]
+Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.8)
+
+## [Release 1.0.9]
+Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.9)
+
+## [Release 1.0.10]
+Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.10)
