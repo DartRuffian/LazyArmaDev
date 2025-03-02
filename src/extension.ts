@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import fs from "fs/promises";
-import {ELogLevel} from "./e-log-level";
-import {existsSync} from "fs";
+import { ELogLevel } from "./e-log-level";
+import { PathType } from "./path-type";
+import { existsSync } from "fs";
 import { extname, join, parse } from "path";
 
 let channel: vscode.OutputChannel = vscode.window.createOutputChannel("LazyArmaDev");
@@ -30,25 +31,32 @@ const addonDiskRegex = /.*\\addons\\[^\\]*/;
 /**
  * Copies the "macro'd" path to a file using the QPATHTOF / QPATHTOEF macros
  * @param {string} macroPath The path to the given file or folder
- * @param {boolean} useExternal (default, false) Use QPATHTOEF macro
+ * @param {PathType} pathType The type of path to copy
  */
-async function copyPath(macroPath: string, useExternal: boolean = false) {
-    const match = macroPath.match(addonRegex);
+async function copyPath(path: string, pathType: PathType = PathType.MACRO) {
+    const match = path.match(addonRegex);
     if (!match) { return; }
 
-    logMessage(ELogLevel.TRACE, `macroPath=${macroPath}, match=${match}`);
-    const macroPathArray = match![1].split("\\");
-    const componentName = macroPathArray.shift();
+    logMessage(ELogLevel.TRACE, `path=${path}, match=${match}`);
+    const pathArray = match![1].split("\\");
+    const componentName = pathArray.shift();
 
-    if (useExternal) {
-        macroPath = `QPATHTOEF(${componentName},${join(...macroPathArray)})`;
-    } else {
-        macroPath = `QPATHTOF(${join(...macroPathArray)})`;
+    switch (pathType) {
+        case PathType.MACRO: {
+            path = `QPATHTOF(${join(...pathArray)})`;
+        }
+        case PathType.MACRO_EXTERNAL: {
+            path = `QPATHTOEF(${componentName},${join(...pathArray)})`;
+        }
+        case PathType.RESOLVED: {
+            const projectPrefix = await getProjectPrefix();
+            path = `${projectPrefix.mainPrefix}\\${projectPrefix.prefix}\\addons\\${join(...pathArray)}`;
+        }
     }
 
-    logMessage(ELogLevel.INFO, `Copied path to clipboard: ${macroPath}`);
-    await vscode.env.clipboard.writeText(macroPath);
-    await vscode.window.showInformationMessage(`Copied ${macroPath} path to clipboard`);
+    logMessage(ELogLevel.INFO, `Copied path to clipboard: ${path}`);
+    await vscode.env.clipboard.writeText(path);
+    await vscode.window.showInformationMessage(`Copied ${path} path to clipboard`);
 }
 
 /**
@@ -66,7 +74,12 @@ async function addStringTableKey(filePath: string, stringKey: string) {
 
     try {
         await fs.writeFile(filePath, content.join("\n"));
-        await vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`);
+        await vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`, "Open File")
+            .then(selection => {
+                if (selection === "Open File") {
+                    vscode.window.showTextDocument(vscode.Uri.file(filePath));
+                }
+            });
     } catch (err) {
         await vscode.window.showErrorMessage(`Failed to write to stringtable file at ${filePath}`);
     }
@@ -88,6 +101,10 @@ async function getProjectPrefix() {
 
     const addonDirArray = addonDir[0].split("\\");
     const component = addonDirArray[addonDirArray.length - 1];
+
+    if (!existsSync(`${addonDir}\\$PBOPREFIX$`)) {
+        return { mainPrefix: "NOT_FOUND", prefix: "NOT_FOUND", component: "NOT_FOUND" };
+    }
 
     // Read $PBOPREFIX$ file to get main prefix and prefix
     const prefixContent = (await fs.readFile(`${addonDir}\\$PBOPREFIX$`, {encoding: "utf-8", flag: "r"})).split("\\");
@@ -143,9 +160,17 @@ function activate(context: vscode.ExtensionContext) {
         if (!editor) { return; }
         let path = editor.path.split("/");
         path.shift();
-        await copyPath(join(...path), true);
+        await copyPath(join(...path), PathType.MACRO_EXTERNAL);
     });
     context.subscriptions.push(copyExternalMacroPath);
+
+    const copyResolvedPath = vscode.commands.registerCommand("lazyarmadev.copyResolvedPath", async (editor) => {
+        if (!editor) { return; }
+        let path = editor.path.split("/");
+        path.shift();
+        await copyPath(join(...path), PathType.RESOLVED);
+    });
+    context.subscriptions.push(copyResolvedPath);
 
     const generatePrepFile = vscode.commands.registerCommand("lazyarmadev.generatePrepFile", async (editor) => {
         if (!editor) { return; }
