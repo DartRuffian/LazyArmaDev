@@ -73,13 +73,16 @@
         "menus": {
             "lazyarmadev": [
                 {
-                    "command": "lazyarmadev.copyMacroPath"
+                    "command": "lazyarmadev.copyMacroPath",
+                    "group": "lazyarmadev@1"
                 },
                 {
-                    "command": "lazyarmadev.copyExternalMacroPath"
+                    "command": "lazyarmadev.copyExternalMacroPath",
+                    "group": "lazyarmadev@2"
                 },
                 {
-                    "command": "lazyarmadev.copyResolvedPath"
+                    "command": "lazyarmadev.copyResolvedPath",
+                    "group": "lazyarmadev@3"
                 }
             ],
             "explorer/context": [
