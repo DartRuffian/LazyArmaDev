@@ -44,13 +44,16 @@ async function copyPath(path: string, pathType: PathType = PathType.MACRO) {
     switch (pathType) {
         case PathType.MACRO: {
             path = `QPATHTOF(${join(...pathArray)})`;
+            break;
         }
         case PathType.MACRO_EXTERNAL: {
             path = `QPATHTOEF(${componentName},${join(...pathArray)})`;
+            break;
         }
         case PathType.RESOLVED: {
-            const projectPrefix = await getProjectPrefix();
+            const projectPrefix = await getProjectPrefix(path);
             path = `${projectPrefix.mainPrefix}\\${projectPrefix.prefix}\\addons\\${join(...pathArray)}`;
+            break;
         }
     }
 
@@ -75,7 +78,8 @@ async function addStringTableKey(filePath: string, stringKey: string) {
     try {
         await fs.writeFile(filePath, content.join("\n"));
         await vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`, "Open File")
-            .then(selection => {
+            .then((selection: string | undefined) => {
+                if (!selection) { return; }
                 if (selection === "Open File") {
                     vscode.window.showTextDocument(vscode.Uri.file(filePath));
                 }
@@ -88,10 +92,10 @@ async function addStringTableKey(filePath: string, stringKey: string) {
 /**
  * Returns the various "prefixes" for the mod / addon
  */
-async function getProjectPrefix() {
-    const filePath = vscode.window.activeTextEditor?.document.fileName;
-    if (!filePath) {
-        return { mainPrefix: "", prefix: "", component: "" };
+async function getProjectPrefix(filePath: string | undefined = "") {
+    // Default for if there's no given path, since there's not always an editor (file) open
+    if (!filePath || filePath === "") {
+        filePath = vscode.window.activeTextEditor?.document.fileName;
     }
 
     const addonDir = filePath!.match(addonDiskRegex);
@@ -215,7 +219,7 @@ function activate(context: vscode.ExtensionContext) {
         const stringtableDir = `${match![0]}\\stringtable.xml`;
         logMessage(ELogLevel.TRACE, `stringtableDir=${stringtableDir}`);
 
-        const projectPrefix = await getProjectPrefix();
+        const projectPrefix = await getProjectPrefix(document.fileName);
         let stringKey = document!.getText(document!.getWordRangeAtPosition(textEditor!.selection.active));
         stringKey = `STR_${projectPrefix.prefix}_${projectPrefix.component}_${stringKey}`;
         logMessage(ELogLevel.TRACE, `stringKey="${stringKey}"`);

@@ -33,3 +33,6 @@ Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.
 
 ## [Release 1.0.10]
 Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.10)
+
+## [Release 1.0.11]
+Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.11)
