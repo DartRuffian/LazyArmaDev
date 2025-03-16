@@ -52,7 +52,7 @@ async function copyPath(path: string, pathType: PathType = PathType.MACRO) {
         }
         case PathType.RESOLVED: {
             const projectPrefix = await getProjectPrefix(path);
-            path = `${projectPrefix.mainPrefix}\\${projectPrefix.prefix}\\${projectPrefix.component}\\addons\\${join(...pathArray)}`;
+            path = `${projectPrefix.mainPrefix}\\${projectPrefix.prefix}\\addons\\${projectPrefix.component}\\${join(...pathArray)}`;
             break;
         }
     }

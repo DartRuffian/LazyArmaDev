@@ -3,7 +3,7 @@
     "displayName": "LazyArmaDev",
     "description": "A VS Code extenstion aimed at making Arma development just a bit easier.",
     "publisher": "DartRuffian",
-    "version": "1.0.13",
+    "version": "1.0.14",
     "repository": {
         "type": "git",
         "url": "https://github.com/DartsArmaMods/LazyArmaDev"
