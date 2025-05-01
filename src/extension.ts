@@ -68,14 +68,22 @@ async function copyPath(path: string, pathType: PathType = PathType.MACRO) {
  * @param {String} stringKey The translation key
  */
 async function addStringTableKey(filePath: string, stringKey: string) {
-    const content = (await fs.readFile(filePath, {encoding: "utf-8", flag: "r"})).split("\n");
+    let content = (await fs.readFile(filePath, {encoding: "utf-8", flag: "r"})).split("\n");
+    const hasTrailingNewline = content.at(-1) === "";
+    let spliceEnd = 2;
+    if (hasTrailingNewline) { spliceEnd = 3; }
 
     const newKey = `        <Key ID="${stringKey}">
             <English></English>
         </Key>`;
-    content.splice(content.length - 2, 0, newKey);
+    content.splice(content.length - spliceEnd, 0, newKey);
 
     try {
+        // Only add trailing newline if setting is enabled and there is not already a newline
+        let config = vscode.workspace.getConfiguration("files");
+        if (!hasTrailingNewline && config.get("insertFinalNewline", false)) {
+            content.push("");
+        }
         await fs.writeFile(filePath, content.join("\n"));
         await vscode.window.showInformationMessage(`Generated stringtable key for ${stringKey}`, "Open File")
             .then((selection: string | undefined) => {
@@ -85,7 +93,6 @@ async function addStringTableKey(filePath: string, stringKey: string) {
                 }
             });
     } catch (err) {
-        await vscode.window.showErrorMessage(`Failed to write to stringtable file at ${filePath}`);
     }
 }
 
@@ -189,16 +196,19 @@ function activate(context: vscode.ExtensionContext) {
         // Only PREP sqf files
         files = files.filter((file) => extname(file.toLowerCase()) === ".sqf");
 
+        files.sort();
         files = files.map(file => {
             let functionName = parse(file).name; // Remove extension
             functionName = (functionName.split("_").splice(1)).join("_"); // Remove fn_ / fnc_ prefix
             return `PREP(${functionName});`;
         });
 
-        const content = files.join("\n");
-
+        let content = files.join("\n");
+        let config = vscode.workspace.getConfiguration("files");
+        if (config.get("insertFinalNewline", false)) {
+            content += "\n";
+        }
         logMessage(ELogLevel.TRACE, `content=${content}`);
-        files.sort();
 
         functionsFolderArray.pop(); // Remove "functions", XEH_PREP should be in addon root
         const prepFileDir = join(...functionsFolderArray, "XEH_PREP.hpp");
@@ -239,7 +249,6 @@ function activate(context: vscode.ExtensionContext) {
             } catch (err) {
                 await vscode.window.showErrorMessage(`Failed to create missing stringtable file at ${stringtableDir}`);
             }
-
         } else {
             await addStringTableKey(stringtableDir, stringKey);
         }
