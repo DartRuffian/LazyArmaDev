@@ -52,6 +52,11 @@ async function copyPath(path: string, pathType: PathType = PathType.MACRO) {
         }
         case PathType.RESOLVED: {
             const projectPrefix = await getProjectPrefix(path);
+            path = `"\\${projectPrefix.mainPrefix}\\${projectPrefix.prefix}\\addons\\${projectPrefix.component}\\${join(...pathArray)}"`;
+            break;
+        }
+        case PathType.RESOLVED_P3D: {
+            const projectPrefix = await getProjectPrefix(path);
             path = `${projectPrefix.mainPrefix}\\${projectPrefix.prefix}\\addons\\${projectPrefix.component}\\${join(...pathArray)}`;
             break;
         }
@@ -182,6 +187,14 @@ function activate(context: vscode.ExtensionContext) {
         await copyPath(join(...path), PathType.RESOLVED);
     });
     context.subscriptions.push(copyResolvedPath);
+
+    const copyResolvedP3DPath = vscode.commands.registerCommand("lazyarmadev.copyResolvedP3DPath", async (editor) => {
+        if (!editor) { return; }
+        let path = editor.path.split("/");
+        path.shift();
+        await copyPath(join(...path), PathType.RESOLVED_P3D);
+    });
+    context.subscriptions.push(copyResolvedP3DPath);
 
     const generatePrepFile = vscode.commands.registerCommand("lazyarmadev.generatePrepFile", async (editor) => {
         if (!editor) { return; }
