@@ -34,6 +34,10 @@
                 "title": "Copy Resolved Path"
             },
             {
+                "command": "lazyarmadev.copyResolvedP3DPath",
+                "title": "Copy Resolved Path (P3D)"
+            },
+            {
                 "command": "lazyarmadev.generatePrepFile",
                 "title": "Generate XEH_PREP.hpp"
             },
@@ -83,6 +87,10 @@
                 {
                     "command": "lazyarmadev.copyResolvedPath",
                     "group": "lazyarmadev@3"
+                },
+                {
+                    "command": "lazyarmadev.copyResolvedP3DPath",
+                    "group": "lazyarmadev@4"
                 }
             ],
             "explorer/context": [
@@ -99,7 +107,7 @@
             "editor/context": [
                 {
                     "command": "lazyarmadev.generateStringtableKey",
-                    "when": "resourceDirname =~ /addons/i && LazyArmaDev.selectedStringtableMacro"
+                    "when": "resourceDirname =~ /optionals/i || resourceDirname =~ /addons/i && LazyArmaDev.selectedStringtableMacro"
                 }
             ]
         }
