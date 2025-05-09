@@ -107,7 +107,7 @@
             "editor/context": [
                 {
                     "command": "lazyarmadev.generateStringtableKey",
-                    "when": "resourceDirname =~ /addons/i && LazyArmaDev.selectedStringtableMacro"
+                    "when": "resourceDirname =~ /optionals/i || resourceDirname =~ /addons/i && LazyArmaDev.selectedStringtableMacro"
                 }
             ]
         }

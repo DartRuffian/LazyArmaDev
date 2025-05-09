@@ -23,10 +23,10 @@ function logMessage(level: ELogLevel, message: string) {
 }
 
 // Used to get the path to something inside the component folder
-const addonRegex = /addons\\(.*)/;
+const addonRegex = /(addons|optionals)\\(.*)/;
 
 // Used to get the path on disk to the component
-const addonDiskRegex = /.*\\addons\\[^\\]*/;
+const addonDiskRegex = /.*\\(addons|optionals)\\[^\\]*/;
 
 /**
  * Copies the "macro'd" path to a file using the QPATHTOF / QPATHTOEF macros
@@ -38,7 +38,7 @@ async function copyPath(path: string, pathType: PathType = PathType.MACRO) {
     if (!match) { return; }
 
     logMessage(ELogLevel.TRACE, `path=${path}, match=${match}`);
-    const pathArray = match![1].split("\\");
+    const pathArray = match![2].split("\\");
     const componentName = pathArray.shift();
 
     switch (pathType) {
@@ -110,13 +110,14 @@ async function getProjectPrefix(filePath: string | undefined = "") {
         filePath = vscode.window.activeTextEditor?.document.fileName;
     }
 
-    const addonDir = filePath!.match(addonDiskRegex);
+    const addonDir = filePath!.match(addonDiskRegex)?.at(0);
+    logMessage(ELogLevel.TRACE, `addonDir=${addonDir}`);
     if (!addonDir) {
         return { mainPrefix: "", prefix: "", component: "" };
     }
 
-    const addonDirArray = addonDir[0].split("\\");
-    const component = addonDirArray[addonDirArray.length - 1];
+    const addonDirArray = addonDir.split("\\");
+    const component = addonDirArray.at(-1);
 
     if (!existsSync(`${addonDir}\\$PBOPREFIX$`)) {
         return { mainPrefix: "NOT_FOUND", prefix: "NOT_FOUND", component: "NOT_FOUND" };
@@ -160,7 +161,6 @@ function activate(context: vscode.ExtensionContext) {
         const macroStart = new vscode.Position(position.line, newCharacter);
 
         selectedWord = document.getText(document.getWordRangeAtPosition(macroStart));
-        logMessage(ELogLevel.TRACE, `selectedWord=${selectedWord}, ${selectedWord.endsWith("STRING")}`);
         await vscode.commands.executeCommand("setContext", "LazyArmaDev.selectedStringtableMacro", selectedWord.endsWith("STRING")); // CSTRING, LSTRING, LLSTRING, etc.
     });
 
