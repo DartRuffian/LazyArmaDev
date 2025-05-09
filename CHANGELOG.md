@@ -39,3 +39,6 @@ Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.0.
 
 ## [Release 1.0.12]
 No changes compared to 1.0.11, there was an error updating the extension and I was not able to upload the same version number.
+
+## [Release 1.1.0]
+Read on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v1.1.0)
