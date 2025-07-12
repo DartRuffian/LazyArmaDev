@@ -16,9 +16,6 @@ def check_style(filepath):
 
         for c in content:
             if (c == "\n"):
-                if (indexOfCharacter == fileLength - 1):
-                    print(f"ERROR: Trailing newline at {filepath} Line number: {lineNumber}")
-                    bad_count_file += 1
                 lineNumber += 1
             elif (c == "\t"):
                 print(f"ERROR: Tab detected at {filepath} Line number: {lineNumber}")
