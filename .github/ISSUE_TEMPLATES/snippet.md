@@ -7,4 +7,4 @@ labels: status/invalid
 
 ### Do not post snippet requests here!
 
-Snippets are simple and not worth their own issues, leave a comment [here](https://github.com/DartsArmaMods/LazyArmaDev/issues/1).
+Snippets are simple and not worth their own issues, leave a comment [here](https://github.com/DartRuffian/LazyArmaDev/issues/1).

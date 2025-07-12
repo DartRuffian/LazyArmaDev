@@ -36,7 +36,7 @@ def main() -> None:
     print(f"Bumped Version: {version}")
 
     with open("CHANGELOG.md", "a") as f:
-        f.write(f"\n\n## [Release {version}]\nRead on [GitHub](https://github.com/DartsArmaMods/LazyArmaDev/releases/tag/v{version})")
+        f.write(f"\n\n## [Release {version}]\nRead on [GitHub](https://github.com/DartRuffian/LazyArmaDev/releases/tag/v{version})")
 
 if __name__ == "__main__":
     main()
