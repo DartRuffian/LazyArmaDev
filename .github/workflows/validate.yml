@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -17,5 +18,3 @@ jobs:
 
     - name: Check for BOM
       uses: arma-actions/bom-check@master
-      with:
-        path: "addons"
