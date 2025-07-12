@@ -29,13 +29,16 @@ const addonRegex = /(addons|optionals)\\(.*)/;
 const addonDiskRegex = /.*\\(addons|optionals)\\[^\\]*/;
 
 /**
- * Copies the "macro'd" path to a file using the QPATHTOF / QPATHTOEF macros
+ * Copies the path to a file in various formats
  * @param {string} macroPath The path to the given file or folder
  * @param {PathType} pathType The type of path to copy
  */
 async function copyPath(path: string, pathType: PathType = PathType.MACRO) {
     const match = path.match(addonRegex);
-    if (!match) { return; }
+    if (!match) {
+        logMessage(ELogLevel.ERROR, `File path ${path} does not match addon structure. File must be in a \`addons\` or \`optionals\` folder.`);
+        await vscode.window.showErrorMessage("File path does not match addon structure. File must be in a `addons` or `optionals` folder.");
+    }
 
     logMessage(ELogLevel.TRACE, `path=${path}, match=${match}`);
     const pathArray = match![2].split("\\");

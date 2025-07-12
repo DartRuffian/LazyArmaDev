@@ -101,7 +101,8 @@
                 },
                 {
                     "submenu": "lazyarmadev",
-                    "group": "5_cutcopypaste"
+                    "group": "5_cutcopypaste",
+                    "when": "resourceDirname =~ /optionals/i || resourceDirname =~ /addons/i"
                 }
             ],
             "editor/context": [
