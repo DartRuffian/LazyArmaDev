@@ -2,7 +2,7 @@
 
 import json
 
-def main() -> None:
+def bump_version() -> str:
     # package.json and package-lock.json are slightly different formats
     # both have a version key, but package-lock also has another in packages
     with open("package.json") as fin:
@@ -37,6 +37,11 @@ def main() -> None:
 
     with open("CHANGELOG.md", "a") as f:
         f.write(f"\n\n## [Release {version}]\nRead on [GitHub](https://github.com/DartRuffian/LazyArmaDev/releases/tag/v{version})")
+
+    return version
+
+def main() -> None:
+    bump_version()
 
 if __name__ == "__main__":
     main()

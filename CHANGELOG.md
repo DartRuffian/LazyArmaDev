@@ -42,3 +42,7 @@ No changes compared to 1.0.11, there was an error updating the extension and I w
 
 ## [Release 1.1.0]
 Read on [GitHub](https://github.com/DartRuffian/LazyArmaDev/releases/tag/v1.1.0)
+
+
+## [Release 1.1.1]
+Read on [GitHub](https://github.com/DartRuffian/LazyArmaDev/releases/tag/v1.1.1)
