@@ -261,7 +261,7 @@ function activate(context: vscode.ExtensionContext) {
             try {
                 await fs.writeFile(stringtableDir, content);
                 await addStringTableKey(stringtableDir, stringKey);
-                vscode.window.showInformationMessage(`Automatically generated missing stringtable.xml file`);
+                vscode.window.showInformationMessage("Automatically generated missing stringtable.xml file");
             } catch (err) {
                 await vscode.window.showErrorMessage(`Failed to create missing stringtable file at ${stringtableDir}`);
             }
